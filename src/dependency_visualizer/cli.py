@@ -1,5 +1,3 @@
-
-
 import argparse
 import re
 from pathlib import Path
@@ -47,101 +45,37 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def validate_package(args: argparse.Namespace,
-                     parser: argparse.ArgumentParser) -> None:
-    """Проверяет формат координат пакета."""
-
-    if not PACKAGE_RE.fullmatch(args.package):
-        parser.error(
-            "--package должен иметь формат GROUP:ARTIFACT "
-            "(например, org.slf4j:slf4j-api)"
-        )
-
-
-def validate_version(args: argparse.Namespace,
-                     parser: argparse.ArgumentParser) -> None:
-    """Проверяет формат версии пакета."""
-
-    if not VERSION_RE.fullmatch(args.version):
-        parser.error(
-            "--version содержит недопустимые символы или пустое значение"
-        )
-
-
-def validate_output(args: argparse.Namespace,
-                    parser: argparse.ArgumentParser) -> None:
-    """Проверяет путь и расширение выходного PNG-файла."""
-
-    if not args.output.strip():
-        parser.error("--output не может быть пустым")
-
-    output = Path(args.output)
-
-    if output.suffix.lower() != ".png":
-        parser.error("--output должен иметь расширение .png")
-
-    if not output.parent.exists() or not output.parent.is_dir():
-        parser.error(
-            f"каталог для --output не существует: {output.parent}"
-        )
-
-    if output.exists() and output.is_dir():
-        parser.error("--output указывает на каталог, а не на файл")
-
-    args.output = str(output)
-
-
-def validate_repository(args: argparse.Namespace,
-                        parser: argparse.ArgumentParser) -> None:
-    """Проверяет URL или путь к тестовому репозиторию."""
-
-    if args.test_mode:
-        validate_test_repository(args, parser)
-    else:
-        validate_remote_repository(args, parser)
-
-
-def validate_test_repository(args: argparse.Namespace,
-                             parser: argparse.ArgumentParser) -> None:
-    """Проверяет локальный файл тестового репозитория."""
-
-    repository_file = Path(args.repository).expanduser()
-
-    if not repository_file.exists():
-        parser.error(
-            f"тестовый файл из --repository не найден: {repository_file}"
-        )
-
-    if not repository_file.is_file():
-        parser.error(
-            "--repository в тестовом режиме должен указывать на файл"
-        )
-
-    args.repository = str(repository_file.resolve())
-
-
-def validate_remote_repository(args: argparse.Namespace,
-                               parser: argparse.ArgumentParser) -> None:
-    """Проверяет адрес удалённого Maven-репозитория."""
-
-    parsed = urlparse(args.repository)
-
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        parser.error(
-            "--repository должен быть корректным HTTP(S)-URL; "
-            "для файла укажите --test-mode"
-        )
-
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Разбирает аргументы и запускает проверки конфигурации."""
-
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    validate_package(args, parser)
-    validate_version(args, parser)
-    validate_output(args, parser)
-    validate_repository(args, parser)
+    if not PACKAGE_RE.fullmatch(args.package):
+        parser.error("--package должен иметь формат GROUP:ARTIFACT (например, org.slf4j:slf4j-api)")
 
+    if not VERSION_RE.fullmatch(args.version):
+        parser.error("--version содержит недопустимые символы или пустое значение")
+
+    output = Path(args.output)
+    if not args.output.strip():
+        parser.error("--output не может быть пустым")
+    if output.suffix.lower() != ".png":
+        parser.error("--output должен иметь расширение .png")
+    if not output.parent.exists() or not output.parent.is_dir():
+        parser.error(f"каталог для --output не существует: {output.parent}")
+    if output.exists() and output.is_dir():
+        parser.error("--output указывает на каталог, а не на файл")
+
+    if args.test_mode:
+        repository_file = Path(args.repository).expanduser()
+        if not repository_file.exists():
+            parser.error(f"тестовый файл из --repository не найден: {repository_file}")
+        if not repository_file.is_file():
+            parser.error("--repository в тестовом режиме должен указывать на файл")
+        args.repository = str(repository_file.resolve())
+    else:
+        parsed = urlparse(args.repository)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            parser.error("--repository должен быть корректным HTTP(S)-URL; для файла укажите --test-mode")
+
+    args.output = str(output)
     return args

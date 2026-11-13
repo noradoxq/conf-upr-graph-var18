@@ -133,3 +133,84 @@ python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
 Для Windows также предусмотрен запуск через файл `run.bat`.
+
+# Этап 2. Сбор данных
+
+## Описание
+
+На втором этапе реализовано получение информации
+о прямых зависимостях Maven-пакетов.
+
+Для получения информации используется Maven Repository.
+
+Программа самостоятельно загружает POM-файлы
+и анализирует их XML-содержимое.
+
+## Структура проекта
+
+```text
+dependency-visualizer/
+│
+├── src/
+│   ├── main.py
+│   └── dependency_visualizer/
+│       ├── __init__.py
+|       ├── maven.py
+│       └── cli.py
+│
+├── tests/
+|   ├── test_maven.py
+│   └── test_cli.py
+│
+├── README.md
+├── .gitignore
+├── pyproject.toml
+└── run.bat
+```
+
+## Используемые библиотеки
+
+Используются стандартные библиотеки Python:
+
+- urllib.request — HTTP-запросы;
+- xml.etree.ElementTree — обработка XML;
+- re — обработка свойств Maven;
+- dataclasses — представление зависимостей.
+
+Сторонние библиотеки и менеджеры пакетов
+для получения зависимостей не используются.
+
+## Реализованные возможности
+
+- Формирование URL POM-файла.
+- Загрузка POM из Maven-репозитория.
+- Извлечение прямых зависимостей.
+- Получение groupId, artifactId и version.
+- Получение scope и optional.
+- Подстановка свойств Maven.
+- Получение зависимостей из родительского POM.
+- Использование dependencyManagement для определения версий.
+- Обработка ошибок загрузки и разбора XML.
+- Вывод прямых зависимостей в консоль.
+
+## Запуск
+
+Пример:
+
+python src/main.py --package org.slf4j:slf4j-api \
+--repository https://repo.maven.apache.org/maven2 \
+--version 2.0.16
+
+## Тестирование
+
+Запуск тестов:
+
+``
+python -m unittest discover -s tests -p "test_*.py" -v
+``
+
+Для проверки MAVEN:
+
+``
+python src/main.py --package org.slf4j:slf4j-api --repository https://repo.maven.apache.org/maven2 --version 2.0.16
+``
